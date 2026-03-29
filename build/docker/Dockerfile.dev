@@ -14,8 +14,10 @@ RUN python3 -m venv /opt/elmfire-venv && \
         numpy pandas pyarrow rasterio pyproj pyyaml scipy
 
 # riskmap-resolver: URI resolution for riskmap:// artifact paths.
-# The resolver source is copied into the build context by 01-build-dev.sh
-# from the sibling riskmap-resolver/ directory.
+# The source directory is expected at riskmap-resolver/ inside the build context.
+# - Local builds (01-build-dev.sh): a temp context is created with the resolver copied in.
+# - CI builds (main.yaml push-dev job): the resolver repo is checked out at ./riskmap-resolver
+#   and the context is the repo root, so the path resolves correctly.
 # Installing [all] includes s3fs, gcsfs, and adlfs so the image supports
 # AWS S3, Google Cloud Storage, and Azure Blob Storage without rebuilding.
 COPY riskmap-resolver/ /opt/riskmap-resolver/
