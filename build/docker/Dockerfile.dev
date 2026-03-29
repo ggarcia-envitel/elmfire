@@ -13,4 +13,12 @@ RUN python3 -m venv /opt/elmfire-venv && \
     /opt/elmfire-venv/bin/pip install --no-cache-dir \
         numpy pandas pyarrow rasterio pyproj pyyaml scipy
 
+# riskmap-resolver: URI resolution for riskmap:// artifact paths.
+# The resolver source is copied into the build context by 01-build-dev.sh
+# from the sibling riskmap-resolver/ directory.
+# Installing [all] includes s3fs, gcsfs, and adlfs so the image supports
+# AWS S3, Google Cloud Storage, and Azure Blob Storage without rebuilding.
+COPY riskmap-resolver/ /opt/riskmap-resolver/
+RUN /opt/elmfire-venv/bin/pip install --no-cache-dir "/opt/riskmap-resolver[all]"
+
 ENV PATH="/opt/elmfire-venv/bin:${PATH}"
