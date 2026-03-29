@@ -1,5 +1,8 @@
+# ELMFIRE_BASE can be overridden to pull from a registry instead of a local tag.
+# Example (CI): --build-arg ELMFIRE_BASE=ghcr.io/org/elmfire:2025.1002
 ARG ELMFIRE_VER=2025.1002
-FROM elmfire:${ELMFIRE_VER}
+ARG ELMFIRE_BASE=elmfire:${ELMFIRE_VER}
+FROM ${ELMFIRE_BASE}
 
 RUN apt-get update -y && \
     apt-get install --no-install-recommends -y python3 python3-pip python3-venv && \

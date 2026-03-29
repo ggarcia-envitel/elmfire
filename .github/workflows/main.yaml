@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  push:
+  push-base:
     permissions:
       contents: read
       packages: write
@@ -14,6 +14,8 @@ jobs:
     env:
       IMAGE_NAME: ${{ github.repository }}
       token: ${{ secrets.DOCKERHUB_TOKEN }}
+    outputs:
+      ghcr_tag: ${{ steps.meta_github.outputs.tags }}
     steps:
       - uses: actions/checkout@v3.5.2
 
@@ -74,3 +76,59 @@ jobs:
           platforms: linux/amd64
           tags: ${{ steps.meta_docker.outputs.tags }}
           labels: ${{ steps.meta_docker.outputs.labels }}
+
+  push-dev:
+    needs: push-base
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ${{ github.repository }}
+      ELMFIRE_VER: "2025.1002"
+      token: ${{ secrets.DOCKERHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3.5.2
+
+      - name: Log in to Github container registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        if: ${{ env.token != '' }}
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push elmfire-dev to Github Packages
+        uses: docker/build-push-action@v4.0.0
+        with:
+          context: build/docker
+          file: build/docker/Dockerfile.dev
+          push: true
+          platforms: linux/amd64
+          build-args: |
+            ELMFIRE_VER=${{ env.ELMFIRE_VER }}
+            ELMFIRE_BASE=ghcr.io/${{ github.actor }}/${{ env.IMAGE_NAME }}:latest
+          tags: |
+            ghcr.io/${{ github.actor }}/${{ env.IMAGE_NAME }}-dev:${{ env.ELMFIRE_VER }}
+            ghcr.io/${{ github.actor }}/${{ env.IMAGE_NAME }}-dev:latest
+
+      - name: Build and push elmfire-dev to Docker Hub
+        uses: docker/build-push-action@v4.0.0
+        if: ${{ env.token != '' }}
+        with:
+          context: build/docker
+          file: build/docker/Dockerfile.dev
+          push: true
+          platforms: linux/amd64
+          build-args: |
+            ELMFIRE_VER=${{ env.ELMFIRE_VER }}
+            ELMFIRE_BASE=clauten/${{ env.IMAGE_NAME }}:latest
+          tags: |
+            clauten/${{ env.IMAGE_NAME }}-dev:${{ env.ELMFIRE_VER }}
+            clauten/${{ env.IMAGE_NAME }}-dev:latest
